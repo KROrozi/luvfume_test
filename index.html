@@ -73,9 +73,16 @@
 
   /* sending */
   .sending{justify-content:center;align-items:center;text-align:center;gap:20px}
-  .sending .bell{font-size:44px;animation:ring 1.2s ease-in-out infinite;transform-origin:50% 8%}
-  @keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(12deg)}40%{transform:rotate(-10deg)}60%{transform:rotate(6deg)}}
-  .sending p{font-size:17px;line-height:1.7;word-break:keep-all}
+  .sendwrap{width:100%;display:flex;flex-direction:column;align-items:center;gap:26px}
+  .sending p{font-size:17px;line-height:1.7;word-break:keep-all;min-height:2em}
+  .loader{position:relative;width:calc(100% - 32px);margin:0 16px;padding-top:38px}
+  .track{height:6px;border-radius:3px;background:rgba(247,244,238,.18);overflow:hidden}
+  .fill{height:100%;width:0;border-radius:3px;background:var(--ink)}
+  /* 바 끝부분을 따라가며 흔들리는 클로슈 */
+  .cloche{position:absolute;left:0;top:0;width:56px;height:40px;margin-left:-28px;transform-origin:50% 100%;will-change:left}
+  .cloche svg{display:block;transform-origin:50% 95%;animation:wobble .7s ease-in-out infinite}
+  @keyframes wobble{0%,100%{transform:rotate(-9deg) translateY(0)}25%{transform:rotate(0) translateY(-3px)}50%{transform:rotate(9deg) translateY(0)}75%{transform:rotate(0) translateY(-3px)}}
+  .pct{font-family:var(--serif);font-size:13px;letter-spacing:.2em;color:var(--muted)}
 
   /* guest check */
   .result{padding:20px 16px calc(32px + env(safe-area-inset-bottom));gap:18px}
@@ -142,8 +149,21 @@
   </section>
 
   <section class="screen sending" id="s-send">
-    <div class="bell">🛎️</div>
-    <p id="send-msg">주방에 주문을 전달하고 있어요</p>
+    <div class="sendwrap">
+      <p id="send-msg">주방에 주문을 전달하고 있어요</p>
+      <div class="loader">
+        <div class="cloche" id="cloche">
+          <svg viewBox="0 0 64 46" width="56" height="40" aria-hidden="true">
+            <circle cx="32" cy="6" r="3.4" fill="#F7F4EE"/>
+            <path d="M8 34 C8 18 18 11 32 11 C46 11 56 18 56 34 Z" fill="#F7F4EE"/>
+            <path d="M16 27 C17 21 21 17.5 26 16" stroke="#1B2A49" stroke-width="2.2" stroke-linecap="round" fill="none" opacity=".35"/>
+            <rect x="3" y="35" width="58" height="4.5" rx="2.2" fill="#F7F4EE"/>
+          </svg>
+        </div>
+        <div class="track"><div class="fill" id="fill"></div></div>
+      </div>
+      <div class="pct" id="pct">0%</div>
+    </div>
   </section>
 
   <section class="screen result" id="s-result">
@@ -270,10 +290,26 @@ $('#skip').onclick  = () => { ans.note=''; submit(); };
 function submit(){
   if (document.activeElement) document.activeElement.blur();
   show('#s-send');
-  const msgs = ['주방에 주문을 전달하고 있어요','마음을 트레이에 올리는 중이에요','곧 영수증이 나옵니다'];
-  let i=0; const m=$('#send-msg');
-  const t=setInterval(()=>{ i=(i+1)%msgs.length; m.textContent=msgs[i]; },900);
-  setTimeout(()=>{ clearInterval(t); buildCheck(); show('#s-result'); initPad(); },2700);
+  const DURATION = 7500;                         // 일부러 길게 (ms)
+  const msgs = [[0,'주방에 주문을 전달하고 있어요'],[28,'마음을 트레이에 올리는 중이에요'],[58,'클로슈를 덮고 있어요'],[86,'곧 영수증이 나옵니다']];
+  const m=$('#send-msg'), fill=$('#fill'), cl=$('#cloche'), pct=$('#pct');
+  /* 멈칫멈칫 나아가는 진행 곡선 (중간에 잠깐 쉬었다 가는 느낌) */
+  const curve = t => {
+    const k=[[0,0],[.18,.22],[.30,.26],[.55,.62],[.68,.66],[.9,.96],[1,1]];
+    for (let i=1;i<k.length;i++){ if (t<=k[i][0]){ const [t0,v0]=k[i-1],[t1,v1]=k[i]; const u=(t-t0)/(t1-t0); return v0+(v1-v0)*(u*u*(3-2*u)); } }
+    return 1;
+  };
+  const t0 = performance.now();
+  (function tick(now){
+    const t = Math.min((now - t0) / DURATION, 1), v = curve(t) * 100;
+    fill.style.width = v + '%';
+    cl.style.left = v + '%';
+    pct.textContent = Math.round(v) + '%';
+    const msg = [...msgs].reverse().find(x => v >= x[0])[1];
+    if (m.textContent !== msg) m.textContent = msg;
+    if (t < 1) requestAnimationFrame(tick);
+    else setTimeout(()=>{ buildCheck(); show('#s-result'); initPad(); }, 500);
+  })(t0);
 }
 
 /* ───────── 게스트 체크 ───────── */
