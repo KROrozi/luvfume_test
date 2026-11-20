@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#1B2A49">
 <title>ROOM SERVICE · LUVFUME</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,52 +16,60 @@
     --sans:'Pretendard',-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  html,body{height:100%}
-  body{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
-  #app{max-width:430px;margin:0 auto;min-height:100dvh;position:relative;overflow-x:hidden}
-  .screen{display:none;min-height:100dvh;padding:28px 24px calc(28px + env(safe-area-inset-bottom));flex-direction:column;animation:in .45s ease both}
+  html,body{height:100%;background:var(--bg);overflow:hidden;overscroll-behavior:none}
+  body{position:fixed;inset:0;color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+
+  /* 보이는 화면(키보드 제외) 크기에 맞춰 JS가 height / translateY를 맞춤 */
+  #app{position:absolute;left:0;right:0;top:0;height:100dvh;max-width:430px;margin:0 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;transition:height .12s ease-out}
+  #app::-webkit-scrollbar{display:none}
+
+  .screen{display:none;min-height:100%;padding:calc(22px + env(safe-area-inset-top)) 24px calc(18px + env(safe-area-inset-bottom));flex-direction:column;animation:in .45s ease both}
   .screen.on{display:flex}
   @keyframes in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-
-  .serif{font-family:var(--serif)}
-  .eyebrow{font-family:var(--serif);font-size:13px;letter-spacing:.32em;color:var(--muted);text-transform:uppercase}
-  .dash{border:0;border-top:1px dashed var(--line);margin:0}
 
   /* intro */
   .intro{justify-content:center;align-items:center;text-align:center;gap:18px}
   .intro .brand{font-family:var(--serif);letter-spacing:.38em;font-size:13px;color:var(--muted)}
   .intro h1{font-family:var(--serif);font-weight:500;font-size:46px;line-height:1.05;letter-spacing:.02em}
   .intro .sub{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:17px}
-  .intro p.copy{font-size:15px;line-height:1.75;color:var(--ink);margin-top:6px;word-break:keep-all}
+  .intro p.copy{font-size:15px;line-height:1.75;margin-top:6px;word-break:keep-all}
   .intro .time{font-size:12px;color:var(--muted);letter-spacing:.04em}
 
-  /* buttons */
   .btn{appearance:none;border:0;cursor:pointer;width:100%;padding:17px 20px;border-radius:999px;background:var(--ink);color:var(--bg);font:600 16px var(--sans);letter-spacing:.02em;transition:transform .15s,opacity .2s}
   .btn:active{transform:scale(.98)}
   .btn[disabled]{opacity:.28;pointer-events:none}
   .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--ink)}
-  .link{background:none;border:0;color:var(--muted);font:500 14px var(--sans);padding:12px;cursor:pointer}
+  .link{background:none;border:0;color:var(--muted);font:500 14px var(--sans);padding:10px;cursor:pointer}
 
-  /* order steps */
-  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;min-height:36px}
-  .back{background:none;border:0;font:500 14px var(--sans);color:var(--muted);padding:8px 0;cursor:pointer}
+  /* order */
+  .top{display:flex;align-items:center;justify-content:space-between;min-height:34px;flex:none}
+  .back{background:none;border:0;font:500 14px var(--sans);color:var(--muted);padding:8px 0;cursor:pointer;width:44px;text-align:left}
   .back.hide{visibility:hidden}
   .dots{display:flex;gap:6px}
   .dots i{width:6px;height:6px;border-radius:50%;background:var(--line);transition:.3s}
   .dots i.on{background:var(--ink);width:18px;border-radius:3px}
-  .step{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:14px;padding-bottom:40px}
-  .step .field{width:100%}
-  .step .tag{font-family:'Ballet','Baskervville',cursive;font-size:34px;line-height:1.1;letter-spacing:0;text-transform:lowercase;color:var(--muted);font-weight:400}
-  .step h2{font-size:27px;line-height:1.35;font-weight:700;letter-spacing:-.02em;word-break:keep-all}
+  /* 질문은 남는 공간의 한가운데 → 키보드가 올라와 공간이 줄어도 가운데에 유지 */
+  .step{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:12px;padding:12px 0}
+  .step .tag{font-family:'Ballet','Baskervville',cursive;font-size:34px;line-height:1.1;text-transform:lowercase;color:var(--muted)}
+  .step h2{font-size:26px;line-height:1.35;font-weight:700;letter-spacing:-.02em;word-break:keep-all}
   .step .hint{font-size:14px;color:var(--muted);line-height:1.6}
-  .field{margin-top:14px}
-  .field input,.field textarea{
-    width:100%;text-align:center;background:transparent;border:0;border-bottom:1.5px solid var(--ink);border-radius:0;
+  .field{width:100%;margin-top:10px}
+  .field input,.field textarea{width:100%;text-align:center;background:transparent;border:0;border-bottom:1.5px solid var(--ink);border-radius:0;
     padding:12px 2px;font:500 20px var(--sans);color:var(--ink);outline:none;resize:none;letter-spacing:-.01em}
-  .field textarea{border:1.5px solid var(--ink);border-radius:14px;padding:14px;font-size:17px;line-height:1.6;min-height:120px;background:var(--paper)}
+  .field textarea{border:1.5px solid var(--ink);border-radius:14px;padding:14px;font-size:17px;line-height:1.6;min-height:96px;background:var(--paper)}
   .field input::placeholder,.field textarea::placeholder{color:#7783A0;font-weight:400}
   .count{text-align:center;font-size:12px;color:var(--muted);margin-top:6px}
-  .foot{display:flex;flex-direction:column;gap:6px}
+  .foot{display:flex;flex-direction:column;gap:4px;flex:none}
+
+  /* 키보드가 올라와 화면이 낮아지면 여백을 줄여 입력창·버튼이 모두 보이게 */
+  .compact .step{gap:6px;padding:4px 0}
+  .compact .step .tag{font-size:26px}
+  .compact .step h2{font-size:21px}
+  .compact .step .hint{font-size:13px}
+  .compact .field{margin-top:4px}
+  .compact .field textarea{min-height:72px}
+  .compact .screen{padding-top:calc(10px + env(safe-area-inset-top));padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+  .compact .btn{padding:14px 20px}
 
   /* sending */
   .sending{justify-content:center;align-items:center;text-align:center;gap:20px}
@@ -81,6 +89,7 @@
   .ck-head .b{font-family:var(--serif);letter-spacing:.38em;font-size:12px;color:var(--muted)}
   .ck-head .t{font-family:var(--serif);font-size:32px;font-weight:600;letter-spacing:.04em}
   .ck-head .s{font-family:var(--serif);letter-spacing:.3em;font-size:12px;color:var(--muted)}
+  .dash{border:0;border-top:1px dashed var(--line)}
   .row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:7px 0}
   .row .k{font-family:var(--serif);font-size:12px;letter-spacing:.14em;color:var(--muted);white-space:nowrap}
   .row .v{font-weight:700;font-size:15px;text-align:right;word-break:keep-all}
@@ -91,16 +100,13 @@
   .pick .name{font-size:22px;font-weight:700;margin:4px 0 8px;letter-spacing:-.01em}
   .pick .no{font-family:var(--serif);font-weight:600}
   .pick .desc{font-size:13.5px;line-height:1.7;color:var(--muted);word-break:keep-all}
-  .note{text-align:center;font-size:15px;line-height:1.7;font-style:normal;word-break:keep-all}
+  .note{text-align:center;font-size:15px;line-height:1.7;word-break:keep-all}
   .total .v{font-size:17px}
-  .sign{margin-top:6px}
   .sign .label{text-align:left;margin-bottom:8px}
-  .pad{position:relative;border-bottom:1.5px solid var(--ink);height:96px;touch-action:none;background:
-      repeating-linear-gradient(to bottom,transparent 0 95px,transparent 95px)}
+  .pad{position:relative;border-bottom:1.5px solid var(--ink);height:96px;touch-action:none}
   .pad canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
   .pad .ph{position:absolute;left:2px;bottom:10px;font-size:13px;color:#7783A0;pointer-events:none;transition:opacity .2s}
   .pad.signed .ph{opacity:0}
-  .sign-actions{display:flex;justify-content:space-between;margin-top:4px}
   .sign-actions button{background:none;border:0;font:500 12px var(--sans);color:var(--muted);padding:8px 0;cursor:pointer}
   .ck-foot{text-align:center;margin-top:18px;display:flex;flex-direction:column;gap:4px}
   .ck-foot b{font-size:14px}
@@ -113,7 +119,6 @@
 <body>
 <div id="app">
 
-  <!-- 1. INTRO -->
   <section class="screen intro on" id="s-intro">
     <div class="brand">LUVFUME</div>
     <h1>ROOM<br>SERVICE</h1>
@@ -123,116 +128,103 @@
     <div style="width:100%;margin-top:14px"><button class="btn" id="start">주문 시작하기</button></div>
   </section>
 
-  <!-- 2. ORDER -->
   <section class="screen" id="s-order">
     <div class="top">
-      <button class="back hide" id="back">← 이전</button>
+      <button class="back hide" id="back" type="button">← 이전</button>
       <div class="dots" id="dots"></div>
       <span style="width:44px"></span>
     </div>
     <div class="step" id="step"></div>
     <div class="foot">
-      <button class="btn" id="next" disabled>다음</button>
-      <button class="link" id="skip" style="display:none">건너뛰기</button>
+      <button class="btn" id="next" type="button" disabled>다음</button>
+      <button class="link" id="skip" type="button" style="display:none">건너뛰기</button>
     </div>
   </section>
 
-  <!-- 3. SENDING -->
   <section class="screen sending" id="s-send">
     <div class="bell">🛎️</div>
     <p id="send-msg">주방에 주문을 전달하고 있어요</p>
   </section>
 
-  <!-- 4. GUEST CHECK -->
   <section class="screen result" id="s-result">
-    <div class="check" id="check">
-      <div class="ck-head">
-        <div class="b">LUVFUME</div>
-        <div class="t">GUEST CHECK</div>
-        <div class="s">ROOM SERVICE</div>
-      </div>
+    <div class="check">
+      <div class="ck-head"><div class="b">LUVFUME</div><div class="t">GUEST CHECK</div><div class="s">ROOM SERVICE</div></div>
       <hr class="dash">
-
-      <!-- ① 메뉴 -->
       <div class="sec" id="menu"></div>
       <hr class="dash">
-
-      <!-- ② 정리한 말 -->
       <div class="sec summary" id="summary"></div>
       <hr class="dash">
-
-      <!-- ③ 오늘의 제안 -->
       <div class="sec pick" id="pick"></div>
       <hr class="dash">
-
-      <!-- 룸 노트 -->
-      <div class="sec">
-        <div class="label">ROOM NOTE</div>
-        <div class="note" id="note"></div>
-      </div>
+      <div class="sec"><div class="label">ROOM NOTE</div><div class="note" id="note"></div></div>
       <hr class="dash">
-
-      <!-- ④ 체크 정보 + 토탈 -->
       <div class="sec" id="meta"></div>
       <hr class="dash">
       <div class="row total" style="padding:14px 0"><span class="k">TOTAL</span><span class="v">한 사람의 하루</span></div>
       <hr class="dash">
-
-      <!-- ⑤ 시그니처 -->
       <div class="sec sign">
         <div class="label">SIGNATURE · 이니셜</div>
         <div class="pad" id="pad"><canvas id="cv"></canvas><span class="ph">여기에 손가락으로 서명해 주세요</span></div>
-        <div class="sign-actions"><button id="clear">지우기</button></div>
+        <div class="sign-actions"><button id="clear" type="button">지우기</button></div>
       </div>
-
-      <div class="ck-foot">
-        <b>주문하신 마음은 문 앞에 도착합니다.</b>
-        <span>선물과 함께 전해드릴게요.</span>
-      </div>
+      <div class="ck-foot"><b>주문하신 마음은 문 앞에 도착합니다.</b><span>선물과 함께 전해드릴게요.</span></div>
     </div>
-
     <div class="actions">
-      <button class="btn" id="save">이 영수증 저장하기</button>
-      <button class="btn ghost" id="again">다시 주문하기</button>
+      <button class="btn" id="save" type="button">이 영수증 저장하기</button>
+      <button class="btn ghost" id="again" type="button">다시 주문하기</button>
     </div>
   </section>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
+/* ───────── 키보드 대응 ─────────
+   키보드가 올라오면 visualViewport(실제로 보이는 영역)가 줄어듭니다.
+   앱 높이를 그 값에 맞추고, iOS가 페이지를 밀어 올리는 만큼 보정해서
+   질문·입력창·버튼이 키보드 바로 위에 고정되게 합니다. */
+const app = document.getElementById('app');
+function fit(){
+  const vv = window.visualViewport;
+  if (!vv) return;
+  app.style.height = vv.height + 'px';
+  app.style.transform = 'translateY(' + vv.offsetTop + 'px)';
+  document.documentElement.classList.toggle('compact', vv.height < 560);
+  document.body.classList.toggle('compact', vv.height < 560);
+  window.scrollTo(0, 0);
+  /* 입력창이 가려지지 않도록 */
+  const a = document.activeElement;
+  if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) a.scrollIntoView({ block:'center', behavior:'smooth' });
+}
+if (window.visualViewport){
+  visualViewport.addEventListener('resize', fit);
+  visualViewport.addEventListener('scroll', fit);
+}
+window.addEventListener('orientationchange', () => setTimeout(fit, 300));
+fit();
+
 /* ───────── 데이터 ───────── */
 const STEPS = [
-  { key:'appetizer', tag:'APPETIZER', q:'누구를 생각하고 계신가요?',       hint:'떠오르는 사람을 편하게 적어 주세요.',       ph:'예) 오래된 친구', max:20 },
-  { key:'main',      tag:'MAIN',      q:'그 사람에게 전하고 싶은 마음은요?', hint:'한 단어도 좋아요.',                      ph:'예) 고마움',     max:20 },
-  { key:'dessert',   tag:'DESSERT',   q:'그 사람이 이랬으면 해요',           hint:'문장 끝을 “~했으면”으로 이어 적어 보세요.', ph:'예) 푹 쉬었으면', max:24 },
-  { key:'time',      tag:'DELIVERY TIME', q:'그 마음은 언제 전하고 싶나요?', hint:'날짜도, 어떤 순간도 괜찮아요.',            ph:'예) 크리스마스',  max:20 },
-  { key:'place',     tag:'DELIVER TO',    q:'어디에 놓아두고 올까요?',       hint:'그 사람이 있을 장소를 떠올려 보세요.',     ph:'예) 현관 문 앞',  max:20 },
-  { key:'note',      tag:'ROOM NOTE',     q:'마지막으로, 한 줄만 남겨 주세요.', hint:'말하지 못했던 한마디도 좋아요. (선택)',  ph:'예) 고마웠다는 말, 아직 못 했네.', max:60, area:true, optional:true },
+  { key:'appetizer', tag:'appetizer',     q:'누구를 생각하고 계신가요?',           hint:'떠오르는 사람을 편하게 적어 주세요.',        ph:'예) 오래된 친구',  max:20 },
+  { key:'main',      tag:'main',          q:'그 사람에게 전하고 싶은 마음은요?',   hint:'한 단어도 좋아요.',                        ph:'예) 고마움',      max:20 },
+  { key:'dessert',   tag:'dessert',       q:'그 사람이 이랬으면 해요',             hint:'문장 끝을 “~했으면”으로 이어 적어 보세요.', ph:'예) 푹 쉬었으면', max:24 },
+  { key:'time',      tag:'delivery time', q:'그 마음은 언제 전하고 싶나요?',       hint:'날짜도, 어떤 순간도 괜찮아요.',            ph:'예) 크리스마스',  max:20 },
+  { key:'place',     tag:'deliver to',    q:'어디에 놓아두고 올까요?',             hint:'그 사람이 있을 장소를 떠올려 보세요.',     ph:'예) 현관 문 앞',  max:20 },
+  { key:'note',      tag:'room note',     q:'마지막으로, 한 줄만 남겨 주세요.',    hint:'말하지 못했던 한마디도 좋아요. (선택)',    ph:'예) 고마웠다는 말, 아직 못 했네.', max:60, area:true, optional:true },
 ];
-
-/* 향 제안 — 조향 의도 확인 전 초안. 키워드 매칭, 없으면 기본값 */
 const PICKS = [
-  { words:['쉬','휴식','편','잠','푹','여유','안정'],           no:12, name:'블랑 르 누아',  desc:'조용한 머스크와 화이트 플로럴, 쉬어가는 저녁을 닮은 향.' },
-  { words:['웃','행복','기쁘','밝','즐거','환'],               no:3,  name:'에끄랑',        desc:'투명하게 번지는 빛처럼, 환하게 웃는 얼굴을 닮은 향.' },
-  { words:['당당','자신','빛나','멋','용기','씩씩','응원'],     no:8,  name:'프로타고니스트', desc:'자기 이야기의 주인공이 되는 순간을 닮은 향.' },
-  { words:['기억','잊지','오래','추억','남'],                  no:5,  name:'플뤼 드 로즈',  desc:'오래 곁에 머무는 장미의 잔향처럼, 기억에 남는 향.' },
+  { words:['쉬','휴식','편','잠','푹','여유','안정'],       no:12, name:'블랑 르 누아',   desc:'조용한 머스크와 화이트 플로럴, 쉬어가는 저녁을 닮은 향.' },
+  { words:['웃','행복','기쁘','밝','즐거','환'],           no:3,  name:'에끄랑',         desc:'투명하게 번지는 빛처럼, 환하게 웃는 얼굴을 닮은 향.' },
+  { words:['당당','자신','빛나','멋','용기','씩씩','응원'], no:8,  name:'프로타고니스트', desc:'자기 이야기의 주인공이 되는 순간을 닮은 향.' },
+  { words:['기억','잊지','오래','추억','남'],              no:5,  name:'플뤼 드 로즈',   desc:'오래 곁에 머무는 장미의 잔향처럼, 기억에 남는 향.' },
 ];
 const FALLBACK = { no:12, name:'블랑 르 누아', desc:'조용한 머스크와 화이트 플로럴, 쉬어가는 저녁을 닮은 향.' };
 
 /* ───────── 유틸 ───────── */
 const $ = s => document.querySelector(s);
 const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function hasBatchim(w){            // 마지막 글자 받침 여부
-  const ch = (w.trim().slice(-1)).charCodeAt(0);
-  if (ch < 0xAC00 || ch > 0xD7A3) return false;
-  return (ch - 0xAC00) % 28 !== 0;
-}
+const hasBatchim = w => { const c=w.trim().slice(-1).charCodeAt(0); return c>=0xAC00 && c<=0xD7A3 && (c-0xAC00)%28!==0; };
 const eul = w => w + (hasBatchim(w) ? '을' : '를');
-function show(id){
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
-  $(id).classList.add('on');
-  window.scrollTo(0,0);
-}
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on')); $(id).classList.add('on'); app.scrollTo(0,0); }
 function toast(t){ const e=$('#toast'); e.textContent=t; e.classList.add('on'); setTimeout(()=>e.classList.remove('on'),1800); }
 
 /* ───────── 주문 흐름 ───────── */
@@ -259,20 +251,24 @@ function render(){
     if ($('#cnt')) $('#cnt').textContent = inp.value.length;
   };
   inp.addEventListener('input', upd); upd();
-  if (!s.area) inp.addEventListener('keydown', e => { if (e.key==='Enter' && !$('#next').disabled) $('#next').click(); });
+  if (!s.area) inp.addEventListener('keydown', e => { if (e.key==='Enter' && !$('#next').disabled){ e.preventDefault(); $('#next').click(); } });
   [...dots.children].forEach((d,i)=>d.classList.toggle('on', i===idx));
   $('#back').classList.toggle('hide', idx===0);
   $('#next').textContent = idx===STEPS.length-1 ? '주문 완료' : '다음';
   $('#skip').style.display = s.optional ? 'block' : 'none';
-  setTimeout(()=>inp.focus({preventScroll:true}), 350);
+  /* 질문이 바뀌어도 키보드가 내려가지 않도록 바로 포커스 */
+  inp.focus({ preventScroll:true });
 }
 
 $('#start').onclick = () => { show('#s-order'); idx=0; render(); };
 $('#back').onclick  = () => { if (idx>0){ idx--; render(); } };
 $('#next').onclick  = () => { idx < STEPS.length-1 ? (idx++, render()) : submit(); };
 $('#skip').onclick  = () => { ans.note=''; submit(); };
+/* 버튼을 눌러도 입력창 포커스를 잃지 않게 (키보드 유지) */
+['#next','#back','#skip'].forEach(s => $(s).addEventListener('pointerdown', e => e.preventDefault()));
 
 function submit(){
+  if (document.activeElement) document.activeElement.blur();
   show('#s-send');
   const msgs = ['주방에 주문을 전달하고 있어요','마음을 트레이에 올리는 중이에요','곧 영수증이 나옵니다'];
   let i=0; const m=$('#send-msg');
@@ -283,60 +279,40 @@ function submit(){
 /* ───────── 게스트 체크 ───────── */
 function buildCheck(){
   const a = ans;
-  // ① 메뉴
   const rows = [['APPETIZER',a.appetizer],['MAIN',a.main],['DESSERT',a.dessert],['DELIVERY TIME',a.time],['DELIVER TO',a.place]];
   $('#menu').innerHTML = rows.map(([k,v])=>`<div class="row"><span class="k">${k}</span><span class="v">${esc(v)}</span></div>`).join('');
-
-  // ② 정리한 말
-  $('#summary').innerHTML =
-    `${esc(a.appetizer)}의 ${esc(a.place)}에<br>${esc(a.time)}에 ${esc(eul(a.main))} 놓아두고 옵니다.<br>그 사람이 ${esc(a.dessert)} 하는 마음으로.`;
-
-  // ③ 오늘의 제안
+  $('#summary').innerHTML = `${esc(a.appetizer)}의 ${esc(a.place)}에<br>${esc(a.time)}에 ${esc(eul(a.main))} 놓아두고 옵니다.<br>그 사람이 ${esc(a.dessert)} 하는 마음으로.`;
   const hit = PICKS.find(p => p.words.some(w => a.dessert.includes(w))) || FALLBACK;
-  $('#pick').innerHTML = `
-    <div class="label">CHEF'S PICK · 오늘의 제안</div>
-    <div class="name"><span class="no">No.${hit.no}</span> ${hit.name}</div>
-    <div class="desc">${hit.desc}</div>`;
-
-  // 룸 노트
+  $('#pick').innerHTML = `<div class="label">CHEF'S PICK · 오늘의 제안</div><div class="name"><span class="no">No.${hit.no}</span> ${hit.name}</div><div class="desc">${hit.desc}</div>`;
   $('#note').innerHTML = a.note ? `“${esc(a.note)}”` : '<span style="color:var(--muted)">남긴 말 없음</span>';
-
-  // ④ 체크 번호 · 룸 · 날짜 · 서버
   const d = new Date(), p = n => String(n).padStart(2,'0');
-  const checkNo = String(Math.floor(Math.random()*9000)+1000).padStart(4,'0');
-  const room = Math.floor(Math.random()*12)+1;
   $('#meta').innerHTML = [
-    ['CHECK NO.', checkNo],
-    ['ROOM', 'No.'+room],
+    ['CHECK NO.', String(Math.floor(Math.random()*9000)+1000)],
+    ['ROOM', 'No.'+(Math.floor(Math.random()*12)+1)],
     ['DATE', `${d.getFullYear()}.${p(d.getMonth()+1)}.${p(d.getDate())}`],
     ['SERVED BY', 'LUVFUME'],
   ].map(([k,v])=>`<div class="row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('');
 }
 
-/* ───────── 시그니처 패드 ───────── */
+/* ───────── 시그니처 ───────── */
 function initPad(){
   const cv = $('#cv'), pad = $('#pad'), ctx = cv.getContext('2d');
   const dpr = window.devicePixelRatio || 1, r = pad.getBoundingClientRect();
   cv.width = r.width*dpr; cv.height = r.height*dpr;
   ctx.scale(dpr,dpr); ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#F7F4EE';
-  let drawing=false;
-  const pos = e => { const b=cv.getBoundingClientRect(), t=e.touches?e.touches[0]:e; return {x:t.clientX-b.left,y:t.clientY-b.top}; };
-  const down = e => { e.preventDefault(); drawing=true; const p=pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); pad.classList.add('signed'); };
-  const move = e => { if(!drawing) return; e.preventDefault(); const p=pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); };
-  const up   = () => { drawing=false; };
-  cv.onpointerdown = down; cv.onpointermove = move; cv.onpointerup = up; cv.onpointerleave = up; cv.onpointercancel = up;
+  let on=false;
+  const pos = e => { const b=cv.getBoundingClientRect(); return {x:e.clientX-b.left, y:e.clientY-b.top}; };
+  cv.onpointerdown = e => { e.preventDefault(); cv.setPointerCapture(e.pointerId); on=true; const q=pos(e); ctx.beginPath(); ctx.moveTo(q.x,q.y); pad.classList.add('signed'); };
+  cv.onpointermove = e => { if(!on) return; const q=pos(e); ctx.lineTo(q.x,q.y); ctx.stroke(); };
+  cv.onpointerup = cv.onpointercancel = () => { on=false; };
   $('#clear').onclick = () => { ctx.clearRect(0,0,r.width,r.height); pad.classList.remove('signed'); };
 }
 
-/* ───────── 저장 / 다시 ───────── */
 $('#save').onclick = async () => {
-  // 외부 라이브러리 없이: 브라우저 기본 캡처/인쇄 안내
-  if (navigator.share) {
-    try { await navigator.share({ title:'ROOM SERVICE · GUEST CHECK', text:$('#summary').innerText }); return; } catch(e){}
-  }
+  if (navigator.share){ try{ await navigator.share({ title:'ROOM SERVICE · GUEST CHECK', text:$('#summary').innerText }); return; }catch(e){} }
   toast('화면을 캡처해서 저장해 주세요');
 };
-$('#again').onclick = () => { ans={}; show('#s-intro'); };
+$('#again').onclick = () => location.reload();
 </script>
 </body>
 </html>
